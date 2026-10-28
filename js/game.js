@@ -669,7 +669,7 @@
     list.forEach((e, i) => {
       const tr = document.createElement('tr');
       if (e.id === highlight) tr.className = 'me';
-      const lv = BALL_LEVELS[Math.min(e.level, MAX_LEVEL)];
+      const lv = BALL_LEVELS[clamp(e.level | 0, 0, MAX_LEVEL)];
       const cells = [[String(i + 1), 'rank'], [(e.coop ? '👥 ' : '') + e.name, ''], [String(e.score), 'score'], [null, ''],
         [`${e.opp ?? 3} 🤖`, ''], [e.date, '']];
       cells.forEach(([txt, cls], ci) => {
