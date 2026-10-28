@@ -320,3 +320,15 @@ body.touch .overlay { padding: max(10px, env(safe-area-inset-top)) max(10px, env
   .tbtn.shoot { width: 80px; height: 80px; }
   #stick { width: 110px; height: 110px; }
 }
+
+/* ---------- Topplista: Alla / Mina ---------- */
+body:not(.online) .online-only { display: none !important; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.tabs button {
+  padding: 7px 12px; border-radius: 10px; cursor: pointer; font: 800 13px Inter, sans-serif;
+  color: var(--muted); background: rgba(255,255,255,.05); border: 1px solid var(--line);
+}
+.tabs button.on { color: #2a1a00; background: linear-gradient(180deg, #ffe066, #f4b400); border-color: transparent; }
+.save-msg { min-height: 18px; margin: -8px 0 14px; }
+.save-msg.good { color: var(--good); font-weight: 800; }
+.save-msg.bad { color: var(--bad); font-weight: 600; }

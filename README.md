@@ -69,6 +69,18 @@ Från nivå 2 börjar de också hoppa och blocka. I spel tillsammans täcker en 
 - Försvararen hoppar och blockar med **skjut-knappen** och snor bollen med **finta-knappen**. Missar man tappar man balansen en kort stund.
 - Superkrafterna gäller här också. Frysstrålen fryser motspelaren.
 
+## Topplista för alla
+
+Topplistan har två flikar: **🌍 Alla** (gemensam för alla spelare, via Supabase) och **📱 Mina** (sparad i webbläsaren). Bara matcher i läget Spela kommer med.
+
+Så här sätter du upp den:
+
+1. Kör `supabase/scoreboard.sql` i Supabase (*SQL Editor → New query → klistra in → Run*).
+2. Fyll i `supabaseUrl` och den **publika** nyckeln (`sb_publishable_…` eller `anon`) i `js/config.js`. Använd aldrig `secret`- eller `service_role`-nyckeln.
+3. Ta bort fusk eller olämpliga namn i Supabase under *Table Editor → scores*.
+
+Databasen godkänner bara rimliga resultat: högst 16 poäng per korg, högst 60 korgar, 1–5 motståndare och tillåtna tecken i namnet. Den tar emot högst 20 resultat per minut totalt. Är `config.js` tom fungerar spelet som vanligt med bara den lokala listan.
+
 ## Kod
 
 | Fil | Innehåll |
@@ -77,4 +89,7 @@ Från nivå 2 börjar de också hoppa och blocka. I spel tillsammans täcker en 
 | `js/actors.js` | Spelarfigurer och bollens elva nivåer (texturer genereras i koden) |
 | `js/audio.js` | All musik och alla ljud syntetiseras med Web Audio, så det finns inga ljudfiler |
 | `js/controls.js` | Tangentbindningar och redigeraren för egna tangenter |
+| `js/config.js` | Adress och publik nyckel till Supabase (topplistan för alla) |
+| `js/online.js` | Hämtar och sparar topplistan för alla, namnfilter |
+| `supabase/scoreboard.sql` | Databasen för topplistan: tabell, rimlighetskontroller och spara-funktion |
 | `js/game.js` | Lägen, försvarar-AI med nivåer, samarbete och passningar, PvP, superkrafter, dunk, skottfysik, touchstyrning, kamera, HUD och scoreboard |

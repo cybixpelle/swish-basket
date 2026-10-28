@@ -118,6 +118,7 @@
       </div>
       <div>
         <h2>Scoreboard</h2>
+        <div class="tabs online-only"><button data-tab="all" class="on">🌍 Alla</button><button data-tab="mine">📱 Mina</button></div>
         <div id="menuBoard"></div>
       </div>
     </div>
@@ -184,7 +185,9 @@
         <input id="nameInput" maxlength="16" placeholder="Skriv ditt namn" autocomplete="off">
         <button class="btn" type="submit">Spara</button>
       </form>
+      <p id="saveMsg" class="small save-msg"></p>
       <h2>Scoreboard</h2>
+      <div class="tabs online-only"><button data-tab="all" class="on">🌍 Alla</button><button data-tab="mine">📱 Mina</button></div>
       <div id="goBoard"></div>
     </div>
     <div class="row-btns">
@@ -199,6 +202,8 @@
 <script src="js/world.js"></script>
 <script src="js/actors.js"></script>
 <script src="js/controls.js"></script>
+<script src="js/config.js"></script>
+<script src="js/online.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

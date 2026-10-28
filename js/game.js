@@ -584,24 +584,31 @@
       $('goSolo').classList.remove('hidden');
       $('nameForm').classList.remove('hidden');
       $('nameInput').value = storage.get(NAME_KEY) || '';
+      board.localId = board.onlineId = null;
+      saveMsg(Online.enabled ? 'Spara för att komma med i topplistan för alla!' : '');
       renderScoreboard($('goBoard'));
       if (!isTouch()) setTimeout(() => $('nameInput').focus(), 60);
     }
     $('gameover').classList.remove('hidden');
   }
 
-  // ---------- scoreboard (sparas i webbläsaren) ----------
+  // ---------- scoreboard: "Mina" sparas i webbläsaren, "Alla" i Supabase (js/online.js) ----------
   const storage = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch { /* privat läge */ } },
   };
+  if (Online.enabled) document.body.classList.add('online');
+  const board = { tab: Online.enabled ? 'all' : 'mine', localId: null, onlineId: null, seq: 0 };
   function loadBoard() {
     try { return JSON.parse(storage.get(SCORE_KEY)) || []; } catch { return []; }
   }
+  const saveMsg = (text, cls = '') => { $('saveMsg').textContent = text; $('saveMsg').className = 'small save-msg ' + cls; };
+
   function saveScore() {
     if (S.saved) return;
+    const name = Online.cleanName($('nameInput').value);
+    if (!name) { saveMsg('Välj ett annat namn.', 'bad'); return; }
     S.saved = true;
-    const name = ($('nameInput').value.trim() || 'Anonym').slice(0, 16);
     storage.set(NAME_KEY, name);
     const entry = { id: Date.now(), name, score: TEAM.score, level: TEAM.level, opp: S.opp, coop: S.humans === 2,
       makes: humans().reduce((s, p) => s + p.st.makes, 0), date: new Date().toLocaleDateString('sv-SE') };
@@ -609,13 +616,49 @@
     list.push(entry);
     list.sort((a, b) => b.score - a.score || b.level - a.level || a.id - b.id);
     storage.set(SCORE_KEY, JSON.stringify(list.slice(0, 10)));
-    renderScoreboard($('goBoard'), entry.id);
+    board.localId = entry.id; board.onlineId = null;
     $('nameForm').classList.add('hidden');
     $('nameInput').blur();
     Sound.click();
+    if (!Online.enabled) { saveMsg('Sparat!'); renderScoreboard($('goBoard')); return; }
+    saveMsg('Sparar i topplistan för alla…');
+    Online.submit(entry).then(r => {
+      board.onlineId = r && r.id;
+      saveMsg(`🌍 Sparat i topplistan för alla – plats ${r ? r.rank : '?'}!`, 'good');
+      setTab('all');
+    }).catch(err => {
+      saveMsg(`Kunde inte nå topplistan för alla (${err.message}). Resultatet är sparat lokalt.`, 'bad');
+      setTab('mine');
+    });
+    renderScoreboard($('goBoard'));
   }
-  function renderScoreboard(el, highlight) {
-    const list = loadBoard();
+
+  function setTab(tab) {
+    board.tab = tab;
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    renderScoreboard($('menuBoard'));
+    renderScoreboard($('goBoard'));
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', e => {
+    e.currentTarget.blur(); Sound.click(); setTab(b.dataset.tab);
+  }));
+
+  function renderScoreboard(el) {
+    // ett äldre svar får inte skriva över ett nyare i samma ruta
+    const seq = String(++board.seq);
+    el.dataset.seq = seq;
+    if (board.tab === 'mine' || !Online.enabled) return renderList(el, loadBoard(), board.localId, true);
+    el.innerHTML = '<div class="empty">Hämtar topplistan…</div>';
+    Online.top().then(rows => {
+      if (el.dataset.seq !== seq) return;
+      renderList(el, rows.map(r => Object.assign(r, { date: new Date(r.created_at).toLocaleDateString('sv-SE') })), board.onlineId, false);
+    }).catch(() => {
+      if (el.dataset.seq !== seq) return;
+      el.innerHTML = '<div class="empty">Kunde inte hämta topplistan för alla just nu. Kolla internet, eller titta under 📱 Mina.</div>';
+    });
+  }
+
+  function renderList(el, list, highlight, local) {
     el.innerHTML = '';
     if (!list.length) {
       el.innerHTML = '<div class="empty">Inga resultat än – bli först på tavlan!</div>';
@@ -641,7 +684,7 @@
     });
     if (highlight && !list.some(e => e.id === highlight)) {
       const note = document.createElement('div'); note.className = 'empty';
-      note.textContent = 'Inte topp 10 den här gången – kör igen!';
+      note.textContent = `Inte topp ${local ? 10 : 20} den här gången – kör igen!`;
       el.append(table, note);
     } else el.appendChild(table);
   }
