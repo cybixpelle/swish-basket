@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1020">
+<title>Swish Basket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game"></div>
+
+<div id="hud" class="hidden">
+  <div class="panel hud-left solo-ui">
+    <div class="label" id="modeLabel">POÄNG</div>
+    <div id="score" class="big">0</div>
+    <div class="row" id="timeRow"><span class="label">TID</span><span id="time">2:00</span></div>
+    <div class="row" id="livesRow"><span class="label">LIV</span><span id="lives"></span></div>
+    <div class="row train-ui"><span class="label">TRÄFF</span><span id="acc">0 / 0</span></div>
+    <div class="row train-ui"><span class="label">SVIT</span><span id="streak">0</span></div>
+    <div class="row" id="defRow"><span class="label">FÖRSVAR</span><span id="defLvl">NIVÅ 0</span></div>
+  </div>
+  <div class="panel hud-center solo-ui">
+    <div class="label">BOLL</div>
+    <div id="ballName"><span class="ball-dot" id="ballDot"></span><span id="ballLabel">Skrutig boll</span></div>
+    <div id="ballPips"></div>
+  </div>
+  <div class="panel hud-right solo-ui">
+    <div class="label">SUPERKRAFTER</div>
+    <div id="fxList" class="fx-list"></div>
+    <div id="fakeStatus" class="ability"></div>
+    <div class="cd"><div id="fakeCd"></div></div>
+    <div id="passHint" class="ability coop-ui"></div>
+  </div>
+
+  <div class="panel pvp-card pvp-ui" id="pvpCard0">
+    <div class="label pname">SPELARE 1</div>
+    <div class="big" id="pvpScore0">0</div>
+    <div class="pball"><span class="ball-dot" id="pvpDot0"></span><span id="pvpBall0"></span></div>
+    <div class="role" id="pvpRole0"></div>
+    <div class="fx-list" id="pvpFx0"></div>
+  </div>
+  <div class="panel pvp-mid pvp-ui">
+    <div id="pvpTime">3:00</div>
+    <div id="pvpPoss"></div>
+  </div>
+  <div class="panel pvp-card right pvp-ui" id="pvpCard1">
+    <div class="label pname">SPELARE 2</div>
+    <div class="big" id="pvpScore1">0</div>
+    <div class="pball"><span class="ball-dot" id="pvpDot1"></span><span id="pvpBall1"></span></div>
+    <div class="role" id="pvpRole1"></div>
+    <div class="fx-list" id="pvpFx1"></div>
+  </div>
+
+  <div id="distance" class="panel"></div>
+  <div id="meterLabel" class="hidden"></div>
+  <div id="meter" class="hidden"><div id="meterZone"></div><div id="meterPerfect"></div><div id="meterFill"></div><div id="meterMark"></div></div>
+  <div id="soundHint"><kbd>M</kbd> musik · <kbd>N</kbd> ljud · <kbd>Esc</kbd> paus/meny</div>
+</div>
+
+<!-- touchkontroller för mobil/surfplatta -->
+<div id="touch" class="hidden">
+  <div id="stickZone"><div id="stick"><div id="stickKnob"></div></div></div>
+  <div id="tbtns">
+    <button class="tbtn shoot" id="tShoot">🏀<small>SKJUT</small></button>
+    <button class="tbtn" id="tFake">↯<small>FINT</small></button>
+    <button class="tbtn" id="tPass">⇄<small>PASSA</small></button>
+  </div>
+  <button class="tbtn mini" id="tPause">⏸</button>
+</div>
+
+<div id="message"></div>
+
+<div id="menu" class="overlay">
+  <div class="card">
+    <h1>Swish <span>Basket</span></h1>
+    <p class="tag">Jakten på guldbollen</p>
+    <h2>Vad vill du göra?</h2>
+    <div class="modes">
+      <button class="mode" data-mode="train">
+        <span class="ico">🎯</span><b>Träna</b>
+        <small>Kasta fritt eller öva 1 mot 1. Ingen klocka och inga liv.</small>
+        <kbd>1</kbd>
+      </button>
+      <button class="mode" data-mode="solo">
+        <span class="ico">🏆</span><b>Spela</b>
+        <small>Mot 1–5 botar, ensam eller två tillsammans. Försvaret blir bättre för varje nivå!</small>
+        <kbd>2</kbd>
+      </button>
+      <button class="mode kb-only" data-mode="pvp">
+        <span class="ico">⚔️</span><b>2 spelare</b>
+        <small>En mot en på samma tangentbord. Tre minuter, och den med flest poäng vinner.</small>
+        <kbd>3</kbd>
+      </button>
+    </div>
+    <p class="small touch-only rotate-tip">📱 Håll telefonen liggande. Dra på vänster sida för att gå och använd knapparna till höger.</p>
+    <div class="cols">
+      <div>
+        <h2 class="kb-only">Kontroller</h2>
+        <ul id="menuControls" class="kb-only"></ul>
+        <button id="keysBtn" class="btn ghost small-btn kb-only">⌨ Välj egna tangenter <kbd>K</kbd></button>
+        <h2 class="gap">Superkrafter på planen</h2>
+        <ul class="powers" id="menuPowers"></ul>
+        <h2 class="gap">Poäng</h2>
+        <ul class="zones">
+          <li><i style="background:#4fc3f7"></i>Närmare än 4 m: 1 poäng</li>
+          <li><i style="background:#7ee081"></i>4 – 6,75 m: 2 poäng</li>
+          <li><i style="background:#ffb74d"></i>6,75 – 10 m: 3 poäng</li>
+          <li><i style="background:#ff6b81"></i>Längre än 10 m: 5 poäng</li>
+          <li>Längre bort = svårare skott (smalare grönt fält, snabbare markör)</li>
+          <li>Swish: +1 · Skott högt i luften: +2 · 💥 <b class="hl">DUNK</b>: 5 poäng</li>
+        </ul>
+        <p class="small">Du börjar med en skrutig boll. Varje mål uppgraderar bollen och höjer försvarets nivå. Efter tio mål har du <b>GULDBOLLEN</b>, men då är försvaret som bäst.</p>
+      </div>
+      <div>
+        <h2>Scoreboard</h2>
+        <div id="menuBoard"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="setup" class="overlay hidden">
+  <div class="card narrow">
+    <h1 id="setupTitle">Spela</h1>
+    <p class="tag" id="setupTag"></p>
+    <h2>Spelare</h2>
+    <div class="seg" id="segPlayers">
+      <button data-v="1">👤 1 spelare</button>
+      <button data-v="2" class="kb-only">👥 2 tillsammans</button>
+    </div>
+    <h2 class="gap">Motståndare (botar)</h2>
+    <div class="seg" id="segOpp">
+      <button data-v="0">0</button><button data-v="1">1</button><button data-v="2">2</button>
+      <button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+    </div>
+    <p class="small" id="setupHint"></p>
+    <p class="small kb-only">Tangenter: <kbd>←</kbd><kbd>→</kbd> motståndare · <kbd>↑</kbd><kbd>↓</kbd> spelare · <kbd>Enter</kbd> kör · <kbd>Esc</kbd> tillbaka</p>
+    <div class="row-btns">
+      <button id="setupGo" class="btn">Kör! <kbd>Enter</kbd></button>
+      <button id="setupBack" class="btn ghost">Tillbaka</button>
+    </div>
+  </div>
+</div>
+
+<div id="controls" class="overlay hidden">
+  <div class="card">
+    <h1>Tan<span>genter</span></h1>
+    <p class="tag">Välj själv vilka knappar du spelar med</p>
+    <div class="keys-wrap"><table class="keys" id="keysTable"></table></div>
+    <p id="keysMsg" class="small"></p>
+    <p class="small">P (paus), M (musik), N (ljud), Esc och Ctrl går inte att välja. Spelare 1 och 2 kan inte dela tangent.</p>
+    <div class="row-btns">
+      <button id="keysDone" class="btn">Klar <kbd>Esc</kbd></button>
+      <button id="keysReset" class="btn ghost">Återställ standard</button>
+    </div>
+  </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="card">
+    <h1>Paus</h1>
+    <p class="tag kb-only">Tryck <kbd>P</kbd> eller <kbd>Esc</kbd> för att fortsätta</p>
+    <div class="col-btns">
+      <button id="resumeBtn" class="btn">Fortsätt</button>
+      <button id="soundBtn" class="btn ghost">🔊 Ljud &amp; musik</button>
+      <button id="pauseKeysBtn" class="btn ghost kb-only">⌨ Tangenter</button>
+      <button id="quitBtn" class="btn ghost">Avsluta till menyn</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameover" class="overlay hidden">
+  <div class="card">
+    <h1 id="goTitle">Slut<span>signal!</span></h1>
+    <div class="final" id="goFinal"><span id="goScore">0</span> poäng</div>
+    <div id="goStats" class="stats"></div>
+    <div id="goSolo">
+      <form id="nameForm">
+        <input id="nameInput" maxlength="16" placeholder="Skriv ditt namn" autocomplete="off">
+        <button class="btn" type="submit">Spara</button>
+      </form>
+      <h2>Scoreboard</h2>
+      <div id="goBoard"></div>
+    </div>
+    <div class="row-btns">
+      <button id="againBtn" class="btn">Spela igen <kbd>Enter</kbd></button>
+      <button id="menuBtn" class="btn ghost">Meny</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/controls.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
